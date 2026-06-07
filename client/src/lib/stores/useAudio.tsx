@@ -2,92 +2,133 @@ import { create } from "zustand";
 
 interface AudioState {
   backgroundMusic: HTMLAudioElement | null;
+  daylightMusic: HTMLAudioElement | null;
+  nightMusic: HTMLAudioElement | null;
   hitSound: HTMLAudioElement | null;
   successSound: HTMLAudioElement | null;
-
   isMuted: boolean;
-  isMusicPlaying: boolean;
-
+  isDaylightMusicPlaying: boolean;
+  isNightMusicPlaying: boolean;
+  
+  // Setter functions
   setBackgroundMusic: (music: HTMLAudioElement) => void;
+  setDaylightMusic: (music: HTMLAudioElement) => void;
+  setNightMusic: (music: HTMLAudioElement) => void;
   setHitSound: (sound: HTMLAudioElement) => void;
   setSuccessSound: (sound: HTMLAudioElement) => void;
-
+  
+  // Control functions
   toggleMute: () => void;
-  playMusic: () => void;
-  stopMusic: () => void;
-
   playHit: () => void;
   playSuccess: () => void;
+  playDaylightMusic: () => void;
+  stopDaylightMusic: () => void;
+  playNightMusic: () => void;
+  stopNightMusic: () => void;
 }
 
 export const useAudio = create<AudioState>((set, get) => ({
   backgroundMusic: null,
+  daylightMusic: null,
+  nightMusic: null,
   hitSound: null,
   successSound: null,
-
   isMuted: false,
-  isMusicPlaying: false,
-
+  isDaylightMusicPlaying: false,
+  isNightMusicPlaying: false,
+  
   setBackgroundMusic: (music) => set({ backgroundMusic: music }),
-
+  setDaylightMusic: (music) => set({ daylightMusic: music }),
+  setNightMusic: (music) => set({ nightMusic: music }),
   setHitSound: (sound) => set({ hitSound: sound }),
-
   setSuccessSound: (sound) => set({ successSound: sound }),
-
+  
   toggleMute: () => {
-    const { isMuted, backgroundMusic } = get();
-    const newMuted = !isMuted;
-
-    set({ isMuted: newMuted });
-
-    // optional: instantly apply mute to music
-    if (backgroundMusic) {
-      backgroundMusic.muted = newMuted;
-    }
+    const { isMuted } = get();
+    const newMutedState = !isMuted;
+    
+    // Just update the muted state
+    set({ isMuted: newMutedState });
+    
+    // Log the change
+    console.log(`Sound ${newMutedState ? 'muted' : 'unmuted'}`);
   },
-
-  // 🎵 ALWAYS plays Zelda's Lullaby (once set)
-  playMusic: () => {
-    const { backgroundMusic, isMuted, isMusicPlaying } = get();
-
-    if (!backgroundMusic || isMusicPlaying) return;
-
-    backgroundMusic.loop = true;
-    backgroundMusic.volume = 0.5;
-    backgroundMusic.muted = isMuted;
-
-    backgroundMusic.play().catch(() => {
-      console.log("Autoplay blocked until user interacts");
-    });
-
-    set({ isMusicPlaying: true });
-  },
-
-  stopMusic: () => {
-    const { backgroundMusic } = get();
-
-    if (backgroundMusic) {
-      backgroundMusic.pause();
-      backgroundMusic.currentTime = 0;
-    }
-
-    set({ isMusicPlaying: false });
-  },
-
+  
   playHit: () => {
     const { hitSound, isMuted } = get();
-    if (!hitSound || isMuted) return;
-
-    const clone = hitSound.cloneNode() as HTMLAudioElement;
-    clone.volume = 0.3;
-    clone.play().catch(() => {});
+    if (hitSound) {
+      // If sound is muted, don't play anything
+      if (isMuted) {
+        console.log("Hit sound skipped (muted)");
+        return;
+      }
+      
+      // Clone the sound to allow overlapping playback
+      const soundClone = hitSound.cloneNode() as HTMLAudioElement;
+      soundClone.volume = 0.3;
+      soundClone.play().catch(error => {
+        console.log("Hit sound play prevented:", error);
+      });
+    }
   },
-
+  
   playSuccess: () => {
     const { successSound, isMuted } = get();
-    if (!successSound || isMuted) return;
-
-    successSound.currentTime = 0;
-    successSound.play().catch(() => {});
+    if (successSound) {
+      // If sound is muted, don't play anything
+      if (isMuted) {
+        console.log("Success sound skipped (muted)");
+        return;
+      }
+      
+      successSound.currentTime = 0;
+      successSound.play().catch(error => {
+        console.log("Success sound play prevented:", error);
+      });
+    }
+  },
+  
+  playDaylightMusic: () => {
+    const { daylightMusic, isMuted, isDaylightMusicPlaying } = get();
+    if (daylightMusic && !isDaylightMusicPlaying) {
+      daylightMusic.loop = true;
+      daylightMusic.volume = 0.5;
+      
+      if (!isMuted) {
+        daylightMusic.play().catch(() => {});
+      }
+      set({ isDaylightMusicPlaying: true });
+    }
+  },
+  
+  stopDaylightMusic: () => {
+    const { daylightMusic } = get();
+    if (daylightMusic) {
+      daylightMusic.pause();
+      daylightMusic.currentTime = 0;
+      set({ isDaylightMusicPlaying: false });
+    }
+  },
+  
+  playNightMusic: () => {
+    const { nightMusic, isMuted, isNightMusicPlaying } = get();
+    if (nightMusic && !isNightMusicPlaying) {
+      nightMusic.loop = true;
+      nightMusic.volume = 0.5;
+      
+      if (!isMuted) {
+        nightMusic.play().catch(() => {});
+      }
+      set({ isNightMusicPlaying: true });
+    }
+  },
+  
+  stopNightMusic: () => {
+    const { nightMusic } = get();
+    if (nightMusic) {
+      nightMusic.pause();
+      nightMusic.currentTime = 0;
+      set({ isNightMusicPlaying: false });
+    }
   }
 }));
