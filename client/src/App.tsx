@@ -8,26 +8,50 @@ import { RideCamera } from "./components/game/RideCamera";
 import { Sky } from "./components/game/Sky";
 import { GameUI } from "./components/game/GameUI";
 import { useRollerCoaster } from "./lib/stores/useRollerCoaster";
-import { useEffect } from "react";
-import { useAudio } from "./store/useAudio";
+import { useAudio } from "./lib/stores/useAudio";
 
-export default function App() {
-  const setBackgroundMusic = useAudio((s) => s.setBackgroundMusic);
-  const playMusic = useAudio((s) => s.playMusic);
-
+function MusicController() {
+  const { isNightMode } = useRollerCoaster();
+  const { 
+    setDaylightMusic, daylightMusic,
+    setNightMusic, nightMusic,
+    isMuted 
+  } = useAudio();
+  const hasStartedRef = useRef(false);
+  
   useEffect(() => {
-    const music = new Audio(
-      "/music/Zelda Ocarina Of Time - Zelda's Lullaby 4.mp3"
-    );
-
-    music.loop = true;
-    music.volume = 0.5;
-
-    setBackgroundMusic(music);
-    playMusic();
-  }, []);
-
-
+    const base = import.meta.env.BASE_URL || '/';
+    
+    const dayMusic = new Audio(`${base}sounds/music.mp3`);
+    dayMusic.loop = true;
+    dayMusic.volume = 0.5;
+    setDaylightMusic(dayMusic);
+    
+    const nightMusicAudio = new Audio(`${base}sounds/lovelyday.mp3`);
+    nightMusicAudio.loop = true;
+    nightMusicAudio.volume = 0.5;
+    setNightMusic(nightMusicAudio);
+    
+    return () => {
+      dayMusic.pause();
+      dayMusic.src = "";
+      nightMusicAudio.pause();
+      nightMusicAudio.src = "";
+    };
+  }, [setDaylightMusic, setNightMusic]);
+  
+  useEffect(() => {
+    const startMusicOnInteraction = () => {
+      if (hasStartedRef.current) return;
+      hasStartedRef.current = true;
+      
+      if (!isMuted) {
+        if (isNightMode && nightMusic) {
+          nightMusic.play().catch(() => {});
+        } else if (!isNightMode && daylightMusic) {
+          daylightMusic.play().catch(() => {});
+        }
+      }
       
       document.removeEventListener('click', startMusicOnInteraction);
       document.removeEventListener('keydown', startMusicOnInteraction);
