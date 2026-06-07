@@ -29,15 +29,24 @@ export const useAudio = create<AudioState>((set, get) => ({
   isMusicPlaying: false,
 
   setBackgroundMusic: (music) => set({ backgroundMusic: music }),
+
   setHitSound: (sound) => set({ hitSound: sound }),
+
   setSuccessSound: (sound) => set({ successSound: sound }),
 
   toggleMute: () => {
-    const { isMuted } = get();
-    set({ isMuted: !isMuted });
+    const { isMuted, backgroundMusic } = get();
+    const newMuted = !isMuted;
+
+    set({ isMuted: newMuted });
+
+    // optional: instantly apply mute to music
+    if (backgroundMusic) {
+      backgroundMusic.muted = newMuted;
+    }
   },
 
-  // 🎵 MAIN ZELDA MUSIC
+  // 🎵 ALWAYS plays Zelda's Lullaby (once set)
   playMusic: () => {
     const { backgroundMusic, isMuted, isMusicPlaying } = get();
 
@@ -45,12 +54,11 @@ export const useAudio = create<AudioState>((set, get) => ({
 
     backgroundMusic.loop = true;
     backgroundMusic.volume = 0.5;
+    backgroundMusic.muted = isMuted;
 
-    if (!isMuted) {
-      backgroundMusic.play().catch(() => {
-        console.log("Autoplay blocked");
-      });
-    }
+    backgroundMusic.play().catch(() => {
+      console.log("Autoplay blocked until user interacts");
+    });
 
     set({ isMusicPlaying: true });
   },
@@ -83,19 +91,3 @@ export const useAudio = create<AudioState>((set, get) => ({
     successSound.play().catch(() => {});
   }
 }));
-
-import { useEffect } from "react";
-import { useAudio } from "./store/useAudio";
-
-export default function App() {
-  const setBackgroundMusic = useAudio((s) => s.setBackgroundMusic);
-  const playMusic = useAudio((s) => s.playMusic);
-
-  useEffect(() => {
-    const music = new Audio(
-      "/music/Zelda Ocarina Of Time - Zelda's Lullaby 4.mp3"
-    );
-
-    setBackgroundMusic(music);
-    playMusic();
-  }, []);
