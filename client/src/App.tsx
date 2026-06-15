@@ -27,7 +27,7 @@ function MusicController() {
     dayMusic.volume = 0.5;
     setDaylightMusic(dayMusic);
     
-    const nightMusicAudio = new Audio(`${base}sounds/Zelda Ocarina Of Time - Zelda's Lullaby 4.mp3`);
+    const nightMusicAudio = new Audio(`${base}sounds/Zelda.mp3`);
     nightMusicAudio.loop = true;
     nightMusicAudio.volume = 0.5;
     setNightMusic(nightMusicAudio);
